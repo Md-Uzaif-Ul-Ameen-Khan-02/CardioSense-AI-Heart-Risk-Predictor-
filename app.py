@@ -112,6 +112,54 @@ section[data-testid="stSidebar"] .stMarkdown h2 { font-size: 1.15rem; font-weigh
 button[data-baseweb="tab"] { font-weight: 600; }
 
 .disclaimer { color: #7c87a6; font-size: .78rem; text-align: center; margin-top: 28px; line-height: 1.5; }
+
+/* ---------- Responsive layout ---------- */
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-bottom: 10px; }
+.grid .card { height: auto; }
+.mobile-hint {
+    display: none; align-items: center; gap: 10px; margin-bottom: 16px;
+    padding: 12px 16px; border-radius: 14px; font-size: .88rem; color: #dfe6ff;
+    background: rgba(80,120,255,.14); border: 1px solid rgba(80,120,255,.4);
+}
+
+/* Let Streamlit columns wrap and stack instead of squeezing */
+div[data-testid="stHorizontalBlock"] { flex-wrap: wrap; gap: 1rem; }
+div[data-testid="stColumn"], div[data-testid="column"] { min-width: min(100%, 320px); }
+
+/* Charts and tables never overflow their container */
+.js-plotly-plot, .plotly, div[data-testid="stPlotlyChart"] { max-width: 100%; }
+div[data-testid="stDataFrame"] { max-width: 100%; overflow-x: auto; }
+
+/* Tabs scroll sideways on small screens */
+div[data-baseweb="tab-list"] { overflow-x: auto; scrollbar-width: none; }
+div[data-baseweb="tab-list"]::-webkit-scrollbar { display: none; }
+
+/* Fluid type */
+.hero h1 { font-size: clamp(1.7rem, 4.2vw, 2.5rem); }
+.kpi .value { font-size: clamp(1.4rem, 3vw, 1.9rem); }
+
+@media (max-width: 992px) {
+    .block-container { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .hero { padding: 28px 28px; }
+}
+
+@media (max-width: 768px) {
+    .block-container { padding: 1rem .8rem 2.5rem; }
+    .hero { padding: 22px 20px; border-radius: 18px; }
+    .hero p { font-size: .92rem; }
+    .pulse { position: static; display: block; font-size: 2.4rem; margin-bottom: 6px; }
+    .badge { margin-top: 10px; font-size: .68rem; }
+    .card { padding: 16px; border-radius: 16px; }
+    .verdict { padding: 16px 18px; border-radius: 16px; }
+    .verdict h2 { font-size: 1.2rem; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .mobile-hint { display: flex; }
+    button[data-baseweb="tab"] { padding-left: 10px; padding-right: 10px; font-size: .85rem; }
+}
+
+@media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -321,6 +369,7 @@ st.markdown(
         <span class="badge">11 CLINICAL FEATURES</span>
         <span class="badge">INSTANT RESULTS</span>
     </div>
+    <div class="mobile-hint">👈 <span>On a phone? Tap the <b>&raquo;</b> arrow at the top-left to open the patient form.</span></div>
     """,
     unsafe_allow_html=True,
 )
@@ -336,13 +385,13 @@ if submitted:
 result = st.session_state.get("result")
 
 if not result:
-    c1, c2, c3 = st.columns(3)
-    for col, icon, title, text in [
-        (c1, "📝", "1. Enter details", "Use the sidebar to provide the patient's vitals, labs and ECG findings."),
-        (c2, "⚡", "2. Run analysis", "Click Analyze Risk. The model scales your inputs and finds the nearest matching cases."),
-        (c3, "📊", "3. Review insights", "See the risk gauge, profile radar, clinical indicators and a downloadable report."),
-    ]:
-        col.markdown(f'<div class="card"><h3>{icon} {title}</h3><div class="sub">{text}</div></div>', unsafe_allow_html=True)
+    steps = [
+        ("📝", "1. Enter details", "Use the sidebar to provide the patient's vitals, labs and ECG findings."),
+        ("⚡", "2. Run analysis", "Click Analyze Risk. The model scales your inputs and finds the nearest matching cases."),
+        ("📊", "3. Review insights", "See the risk gauge, profile radar, clinical indicators and a downloadable report."),
+    ]
+    cards = "".join(f'<div class="card"><h3>{i} {t}</h3><div class="sub">{d}</div></div>' for i, t, d in steps)
+    st.markdown(f'<div class="grid">{cards}</div>', unsafe_allow_html=True)
     st.info("👈 Start by filling the form in the sidebar.")
 else:
     pred, prob, res_in = result["pred"], result["prob"], result["inputs"]
@@ -361,16 +410,17 @@ else:
             unsafe_allow_html=True,
         )
 
-    k1, k2, k3, k4 = st.columns(4)
     kpis = [
-        (k1, "Prediction", "At Risk" if high else "Not at Risk", "Model classification"),
-        (k2, "Risk Score", f"{prob*100:.0f}%" if prob is not None else "N/A", "Neighbour-based probability"),
-        (k3, "Blood Pressure", f"{res_in['resting_bp']}", "mm Hg (resting)"),
-        (k4, "Max Heart Rate", f"{res_in['max_hr']}", "beats per minute"),
+        ("Prediction", "At Risk" if high else "Not at Risk", "Model classification"),
+        ("Risk Score", f"{prob*100:.0f}%" if prob is not None else "N/A", "Neighbour-based probability"),
+        ("Blood Pressure", f"{res_in['resting_bp']}", "mm Hg (resting)"),
+        ("Max Heart Rate", f"{res_in['max_hr']}", "beats per minute"),
     ]
-    for col, label, value, note in kpis:
-        col.markdown(f'<div class="card kpi"><div class="label">{label}</div><div class="value">{value}</div><div class="note">{note}</div></div>',
-                     unsafe_allow_html=True)
+    kpi_html = "".join(
+        f'<div class="card kpi"><div class="label">{l}</div><div class="value">{v}</div><div class="note">{n}</div></div>'
+        for l, v, n in kpis
+    )
+    st.markdown(f'<div class="grid">{kpi_html}</div>', unsafe_allow_html=True)
 
     st.write("")
     tab1, tab2, tab3, tab4 = st.tabs(["📈 Risk Analysis", "🧬 Clinical Indicators", "💡 Recommendations", "📄 Report"])
@@ -407,9 +457,8 @@ else:
             ("🩸", "Monitor regularly", "Track blood pressure, cholesterol and blood sugar with periodic check-ups."),
             ("😴", "Sleep & stress", "Seven to eight hours of sleep and stress management support heart health."),
         ]
-        cols = st.columns(len(tips))
-        for col, (ic, t, d) in zip(cols, tips):
-            col.markdown(f'<div class="card"><h3>{ic} {t}</h3><div class="sub">{d}</div></div>', unsafe_allow_html=True)
+        tip_html = "".join(f'<div class="card"><h3>{ic} {t}</h3><div class="sub">{d}</div></div>' for ic, t, d in tips)
+        st.markdown(f'<div class="grid">{tip_html}</div>', unsafe_allow_html=True)
         if high:
             st.warning("Because the model flagged elevated risk, please book an appointment with a cardiologist for a proper evaluation.")
 
