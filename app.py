@@ -32,8 +32,22 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
         #0b0f1a;
 }
 
-#MainMenu, footer, header[data-testid="stHeader"] { visibility: hidden; height: 0; }
-.block-container { padding-top: 1.6rem; padding-bottom: 3rem; max-width: 1300px; }
+#MainMenu, footer { visibility: hidden; }
+
+/* Keep the header (it holds the sidebar arrow) but make it blend into the page */
+header[data-testid="stHeader"] { background: transparent; }
+.block-container { padding-top: 3.2rem; padding-bottom: 3rem; max-width: 1300px; }
+
+/* Make the sidebar open/close arrow clearly visible */
+[data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapsedControl"] button,
+[data-testid="stSidebarCollapseButton"] button {
+    color: #fff !important;
+    background: linear-gradient(90deg, #ff4b6e, #ff7a59) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 18px rgba(255,75,110,.45);
+}
+[data-testid="stExpandSidebarButton"] svg, [data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="stSidebarCollapseButton"] svg { color: #fff !important; fill: #fff !important; }
 
 /* Hero */
 .hero {
@@ -144,7 +158,7 @@ div[data-baseweb="tab-list"]::-webkit-scrollbar { display: none; }
 }
 
 @media (max-width: 768px) {
-    .block-container { padding: 1rem .8rem 2.5rem; }
+    .block-container { padding: 3rem .8rem 2.5rem; }
     .hero { padding: 22px 20px; border-radius: 18px; }
     .hero p { font-size: .92rem; }
     .pulse { position: static; display: block; font-size: 2.4rem; margin-bottom: 6px; }
@@ -369,7 +383,7 @@ st.markdown(
         <span class="badge">11 CLINICAL FEATURES</span>
         <span class="badge">INSTANT RESULTS</span>
     </div>
-    <div class="mobile-hint">👈 <span>On a phone? Tap the <b>&raquo;</b> arrow at the top-left to open the patient form.</span></div>
+    <div class="mobile-hint">👈 <span>On a phone? Tap the pink arrow button at the top-left to open the patient form.</span></div>
     """,
     unsafe_allow_html=True,
 )
