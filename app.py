@@ -1,4 +1,5 @@
 import datetime as dt
+from pathlib import Path
 
 import joblib
 import pandas as pd
@@ -121,16 +122,32 @@ st.markdown(CSS, unsafe_allow_html=True)
 # ----------------------------------------------------------------------------
 @st.cache_resource(show_spinner="Loading model...")
 def load_artifacts():
-    model = joblib.load("./knn_heart.pkl")
-    scaler = joblib.load("./scaler.pkl")
-    columns = joblib.load("./columns.pkl")
+    here = Path(__file__).resolve().parent
+    search_dirs = [here, here.parent, Path.cwd()]
+
+    def find(name: str) -> Path:
+        # Case-insensitive lookup in the app folder, its parent, and the working folder
+        for d in search_dirs:
+            if d.is_dir():
+                for p in d.iterdir():
+                    if p.is_file() and p.name.lower() == name.lower():
+                        return p
+        raise FileNotFoundError(name)
+
+    model = joblib.load(find("knn_heart.pkl"))
+    scaler = joblib.load(find("scaler.pkl"))
+    columns = joblib.load(find("columns.pkl"))
     return model, scaler, columns
 
 
 try:
     model, scaler, expected_columns = load_artifacts()
 except FileNotFoundError as e:
-    st.error(f"Model file missing: {e}. Keep knn_heart.pkl, scaler.pkl and columns.pkl next to app.py.")
+    here = Path(__file__).resolve().parent
+    st.error(f"Model file missing: {e}")
+    for d in [here, here.parent]:
+        st.write(f"Files in `{d}`:", sorted(p.name for p in d.iterdir()))
+    st.info("Make sure KNN_heart.pkl, scaler.pkl and columns.pkl are in one of the folders listed above.")
     st.stop()
 
 
