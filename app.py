@@ -321,37 +321,59 @@ def indicators(i: dict):
 
 
 # ----------------------------------------------------------------------------
-# Sidebar: inputs
+# Hero
 # ----------------------------------------------------------------------------
-with st.sidebar:
-    st.markdown("## 🩺 Patient Profile")
-    st.caption("Fill in the clinical details, then run the analysis.")
+st.markdown(
+    """
+    <div class="hero">
+        <div class="pulse">🫀</div>
+        <h1>Cardio<span>Sense</span> AI</h1>
+        <p>An intelligent heart-risk screening dashboard powered by a K-Nearest Neighbours model.
+        Enter the clinical details below and get an instant, visual risk assessment.</p>
+        <span class="badge">KNN MODEL</span>
+        <span class="badge">11 CLINICAL FEATURES</span>
+        <span class="badge">INSTANT RESULTS</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ----------------------------------------------------------------------------
+# Patient form (main page, so it works on every device with no sidebar needed)
+# ----------------------------------------------------------------------------
+with st.expander("🩺 Patient Profile - tap to open / close", expanded="result" not in st.session_state):
+    st.caption("Fill in the clinical details, then press Analyze Risk.")
 
     with st.form("patient_form"):
-        st.markdown("**Demographics**")
-        age = st.slider("Age", 18, 100, 40)
-        sex_label = st.radio("Sex", ["Male", "Female"], horizontal=True)
+        col1, col2, col3 = st.columns(3)
 
-        st.markdown("**Vitals & Labs**")
-        resting_bp = st.number_input("Resting Blood Pressure (mm Hg)", 80, 200, 120)
-        cholesterol = st.number_input("Cholesterol (mg/dL)", 100, 600, 200)
-        fasting_label = st.radio("Fasting Blood Sugar > 120 mg/dL", ["No", "Yes"], horizontal=True)
+        with col1:
+            st.markdown("**Demographics & Labs**")
+            age = st.slider("Age", 18, 100, 40)
+            sex_label = st.radio("Sex", ["Male", "Female"], horizontal=True)
+            cholesterol = st.number_input("Cholesterol (mg/dL)", 100, 600, 200)
+            fasting_label = st.radio("Fasting Blood Sugar > 120 mg/dL", ["No", "Yes"], horizontal=True)
 
-        st.markdown("**Cardiac Tests**")
-        chest_pain = st.selectbox(
-            "Chest Pain Type",
-            ["ATA", "NAP", "TA", "ASY"],
-            format_func=lambda x: {"ATA": "ATA - Atypical Angina", "NAP": "NAP - Non-Anginal Pain",
-                                   "TA": "TA - Typical Angina", "ASY": "ASY - Asymptomatic"}[x],
-        )
-        resting_ecg = st.selectbox(
-            "Resting ECG", ["Normal", "ST", "LVH"],
-            format_func=lambda x: {"Normal": "Normal", "ST": "ST-T wave abnormality", "LVH": "Left ventricular hypertrophy"}[x],
-        )
-        max_hr = st.slider("Max Heart Rate", 60, 220, 150)
-        angina_label = st.radio("Exercise-Induced Angina", ["No", "Yes"], horizontal=True)
-        oldpeak = st.slider("Oldpeak (ST Depression)", 0.0, 6.0, 1.0, 0.1)
-        st_slope = st.selectbox("ST Slope", ["Up", "Flat", "Down"])
+        with col2:
+            st.markdown("**Vitals & Cardiac Tests**")
+            resting_bp = st.number_input("Resting Blood Pressure (mm Hg)", 80, 200, 120)
+            max_hr = st.slider("Max Heart Rate", 60, 220, 150)
+            chest_pain = st.selectbox(
+                "Chest Pain Type",
+                ["ATA", "NAP", "TA", "ASY"],
+                format_func=lambda x: {"ATA": "ATA - Atypical Angina", "NAP": "NAP - Non-Anginal Pain",
+                                       "TA": "TA - Typical Angina", "ASY": "ASY - Asymptomatic"}[x],
+            )
+            resting_ecg = st.selectbox(
+                "Resting ECG", ["Normal", "ST", "LVH"],
+                format_func=lambda x: {"Normal": "Normal", "ST": "ST-T wave abnormality", "LVH": "Left ventricular hypertrophy"}[x],
+            )
+
+        with col3:
+            st.markdown("**Exercise & ST Findings**")
+            angina_label = st.radio("Exercise-Induced Angina", ["No", "Yes"], horizontal=True)
+            oldpeak = st.slider("Oldpeak (ST Depression)", 0.0, 6.0, 1.0, 0.1)
+            st_slope = st.selectbox("ST Slope", ["Up", "Flat", "Down"])
 
         submitted = st.form_submit_button("🔍 Analyze Risk")
 
@@ -370,25 +392,6 @@ inputs = {
 }
 
 # ----------------------------------------------------------------------------
-# Hero
-# ----------------------------------------------------------------------------
-st.markdown(
-    """
-    <div class="hero">
-        <div class="pulse">🫀</div>
-        <h1>Cardio<span>Sense</span> AI</h1>
-        <p>An intelligent heart-risk screening dashboard powered by a K-Nearest Neighbours model.
-        Enter clinical details in the sidebar and get an instant, visual risk assessment.</p>
-        <span class="badge">KNN MODEL</span>
-        <span class="badge">11 CLINICAL FEATURES</span>
-        <span class="badge">INSTANT RESULTS</span>
-    </div>
-    <div class="mobile-hint">👈 <span>On a phone? Tap the pink arrow button at the top-left to open the patient form.</span></div>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ----------------------------------------------------------------------------
 # Run prediction
 # ----------------------------------------------------------------------------
 if submitted:
@@ -400,13 +403,13 @@ result = st.session_state.get("result")
 
 if not result:
     steps = [
-        ("📝", "1. Enter details", "Use the sidebar to provide the patient's vitals, labs and ECG findings."),
+        ("📝", "1. Enter details", "Use the Patient Profile panel above to provide vitals, labs and ECG findings."),
         ("⚡", "2. Run analysis", "Click Analyze Risk. The model scales your inputs and finds the nearest matching cases."),
         ("📊", "3. Review insights", "See the risk gauge, profile radar, clinical indicators and a downloadable report."),
     ]
     cards = "".join(f'<div class="card"><h3>{i} {t}</h3><div class="sub">{d}</div></div>' for i, t, d in steps)
     st.markdown(f'<div class="grid">{cards}</div>', unsafe_allow_html=True)
-    st.info("👈 Start by filling the form in the sidebar.")
+    st.info("👆 Start by filling in the Patient Profile form above.")
 else:
     pred, prob, res_in = result["pred"], result["prob"], result["inputs"]
     high = pred == 1
